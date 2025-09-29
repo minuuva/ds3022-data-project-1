@@ -1,6 +1,6 @@
 import duckdb
 import logging
-
+# I am doing the transformation in DBT
 # Configure logging to write to transform.log file with timestamp format
 logging.basicConfig(
     level=logging.INFO, 

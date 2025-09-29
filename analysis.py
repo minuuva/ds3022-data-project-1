@@ -228,10 +228,10 @@ def co2_by_month_analysis(con):
 
 def create_co2_plot(con):
     """
-    Generate time-series plot with MONTH on X-axis and CO2 totals on Y-axis.
+    Generate time-series plot with YEAR on X-axis and CO2 totals on Y-axis.
     
-    This function satisfies the rubric requirement to create a matplotlib plot with:
-    - MONTH along the X-axis (Jan-Dec)
+    This function creates a matplotlib plot with:
+    - YEAR along the X-axis (2015-2024)
     - CO2 totals along the Y-axis  
     - Two lines/plots: one for YELLOW and one for GREEN taxi trip CO2 totals
     - Output as PNG image file committed to the project
@@ -239,65 +239,64 @@ def create_co2_plot(con):
     Args:
         con: Active DuckDB database connection (read-only)
     """
-    print("\n=== GENERATING CO2 BY MONTH PLOT ===")
-    logger.info("Creating CO2 by month plot")
+    print("\n=== GENERATING CO2 BY YEAR PLOT ===")
+    logger.info("Creating CO2 by year plot")
     
-    # Get monthly CO2 totals for both taxi types
-    yellow_monthly = con.execute("""
-        SELECT month_of_year, SUM(trip_co2_kgs) as total_co2
+    # Get yearly CO2 totals for both taxi types
+    yellow_yearly = con.execute("""
+        SELECT year, SUM(trip_co2_kgs) as total_co2
         FROM yellow_trips_transformed 
-        WHERE trip_co2_kgs IS NOT NULL AND month_of_year IS NOT NULL
-        GROUP BY month_of_year
-        ORDER BY month_of_year
+        WHERE trip_co2_kgs IS NOT NULL AND year IS NOT NULL
+        GROUP BY year
+        ORDER BY year
     """).fetchall()
     
-    green_monthly = con.execute("""
-        SELECT month_of_year, SUM(trip_co2_kgs) as total_co2
+    green_yearly = con.execute("""
+        SELECT year, SUM(trip_co2_kgs) as total_co2
         FROM green_trips_transformed 
-        WHERE trip_co2_kgs IS NOT NULL AND month_of_year IS NOT NULL
-        GROUP BY month_of_year
-        ORDER BY month_of_year
+        WHERE trip_co2_kgs IS NOT NULL AND year IS NOT NULL
+        GROUP BY year
+        ORDER BY year
     """).fetchall()
     
     # Convert to pandas DataFrames for easier plotting
-    yellow_df = pd.DataFrame(yellow_monthly, columns=['month', 'total_co2'])
-    green_df = pd.DataFrame(green_monthly, columns=['month', 'total_co2'])
+    yellow_df = pd.DataFrame(yellow_yearly, columns=['year', 'total_co2'])
+    green_df = pd.DataFrame(green_yearly, columns=['year', 'total_co2'])
     
     # Create the plot
     plt.figure(figsize=(12, 8))
-    plt.plot(yellow_df['month'], yellow_df['total_co2']/1000, 'o-', 
+    plt.plot(yellow_df['year'], yellow_df['total_co2']/1000000, 'o-', 
              label='Yellow Taxi', linewidth=2, markersize=8, color='#FFD700')
-    plt.plot(green_df['month'], green_df['total_co2']/1000, 's-', 
+    plt.plot(green_df['year'], green_df['total_co2']/1000000, 's-', 
              label='Green Taxi', linewidth=2, markersize=8, color='#32CD32')
     
-    plt.xlabel('Month of Year', fontsize=12)
-    plt.ylabel('Total CO2 Emissions (Tons)', fontsize=12)
-    plt.title('NYC Taxi CO2 Emissions by Month (2015-2024)', fontsize=14, fontweight='bold')
+    plt.xlabel('Year', fontsize=12)
+    plt.ylabel('Total CO2 Emissions (Million kg)', fontsize=12)
+    plt.title('NYC Taxi CO2 Emissions by Year (2015-2024)', fontsize=14, fontweight='bold')
     plt.legend(fontsize=11)
     plt.grid(True, alpha=0.3)
-    plt.xticks(range(1, 13), ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                              'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
+    plt.xticks(yellow_df['year'])
     
     # Add value annotations on the points
     for i, row in yellow_df.iterrows():
-        plt.annotate(f'{row["total_co2"]/1000:.0f}', 
-                    (row['month'], row['total_co2']/1000), 
+        plt.annotate(f'{row["total_co2"]/1000000:.1f}', 
+                    (row['year'], row['total_co2']/1000000), 
                     textcoords="offset points", xytext=(0,10), ha='center', fontsize=9)
     
     for i, row in green_df.iterrows():
-        plt.annotate(f'{row["total_co2"]/1000:.0f}', 
-                    (row['month'], row['total_co2']/1000), 
+        plt.annotate(f'{row["total_co2"]/1000000:.1f}', 
+                    (row['year'], row['total_co2']/1000000), 
                     textcoords="offset points", xytext=(0,-15), ha='center', fontsize=9)
     
     plt.tight_layout()
-    plt.savefig('co2_emissions_by_month.png', dpi=300, bbox_inches='tight')
-    print("Plot saved as 'co2_emissions_by_month.png'")
+    plt.savefig('co2_emissions_by_year.png', dpi=300, bbox_inches='tight')
+    print("Plot saved as 'co2_emissions_by_year.png'")
     logger.info("CO2 emissions plot saved successfully")
     
     # Print summary statistics
-    print(f"\nYellow Taxi Total Annual CO2: {yellow_df['total_co2'].sum()/1000:.1f} tons")
-    print(f"Green Taxi Total Annual CO2: {green_df['total_co2'].sum()/1000:.1f} tons")
-    print(f"Combined Total Annual CO2: {(yellow_df['total_co2'].sum() + green_df['total_co2'].sum())/1000:.1f} tons")
+    print(f"\nYellow Taxi Total CO2 (2015-2024): {yellow_df['total_co2'].sum()/1000000:.1f} million kg")
+    print(f"Green Taxi Total CO2 (2015-2024): {green_df['total_co2'].sum()/1000000:.1f} million kg")
+    print(f"Combined Total CO2 (2015-2024): {(yellow_df['total_co2'].sum() + green_df['total_co2'].sum())/1000000:.1f} million kg")
 
 def main():
     """
