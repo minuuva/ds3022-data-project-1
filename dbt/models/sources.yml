@@ -1,0 +1,43 @@
+# DBT Sources Configuration
+# 
+# This file defines the source tables that DBT models reference from the DuckDB database.
+# These tables are created and populated by the Python ETL scripts (load.py, clean.py).
+# The sources are used in transformation models to create calculated columns.
+
+version: 2
+
+sources:
+  - name: main
+    description: "Main DuckDB schema containing cleaned taxi trip data and emissions lookup table"
+    tables:
+      - name: yellow_trips
+        description: "Yellow taxi trip records (cleaned by clean.py)"
+        columns:
+          - name: trip_distance
+            description: "Trip distance in miles (cleaned: >0, <=100)"
+          - name: tpep_pickup_datetime
+            description: "Trip pickup datetime (cleaned: not null, 2015-2024)"
+          - name: tpep_dropoff_datetime
+            description: "Trip dropoff datetime (cleaned: not null, <24hr duration)"
+          - name: passenger_count
+            description: "Number of passengers (cleaned: >0)"
+            
+      - name: green_trips
+        description: "Green taxi trip records (cleaned by clean.py)"
+        columns:
+          - name: trip_distance
+            description: "Trip distance in miles (cleaned: >0, <=100)"
+          - name: lpep_pickup_datetime
+            description: "Trip pickup datetime (cleaned: not null, 2015-2024)"
+          - name: lpep_dropoff_datetime
+            description: "Trip dropoff datetime (cleaned: not null, <24hr duration)"
+          - name: passenger_count
+            description: "Number of passengers (cleaned: >0)"
+            
+      - name: vehicle_emissions
+        description: "Vehicle emissions lookup table (loaded by load.py)"
+        columns:
+          - name: vehicle_type
+            description: "Type of vehicle: 'yellow_taxi' or 'green_taxi'"
+          - name: co2_grams_per_mile
+            description: "CO2 emissions factor in grams per mile for each vehicle type"
